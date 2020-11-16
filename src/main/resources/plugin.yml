@@ -1,0 +1,10 @@
+name: BlockBreakerKK
+version: ${project.version}
+main: honeb1.blockbreakerkk.BlockBreakerKK
+api-version: 1.16
+permissions:
+  bb.use:
+    default: true
+commands:
+  bb:
+    permission: bb.use
