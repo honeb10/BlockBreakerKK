@@ -12,6 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -35,6 +36,15 @@ import java.util.Map;
 public final class BlockBreakerKK extends JavaPlugin implements Listener {
     Configuration data;
     ArrayList<Location> bbLocations = new ArrayList<>();
+    final Material[] PickAxes = //type  1
+            {Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
+             Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE};
+    final Material[] Axes = //type 2
+            {Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
+             Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE};
+    final Material[] Shovels = //type 3
+            {Material.WOODEN_SHOVEL, Material.STONE_SHOVEL, Material.IRON_SHOVEL,
+             Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL};
 
     @Override
     public void onEnable() {
@@ -90,23 +100,23 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
         //ディスペンサー確定
         Dispenser dispenser = (Dispenser)b.getState();
         Inventory dInv = dispenser.getInventory();
-        boolean hasOnlyPickaxe = false;
+        boolean hasOnlyOneTool = false;
         for(int i=0;i<dInv.getSize();i++){
             ItemStack itemStack = dInv.getItem(i);
             if(itemStack == null){
                 continue;
-            }else if( !isPickaxe(itemStack) ) {//ツルハシ以外
-                hasOnlyPickaxe = false;
+            }else if( getToolType(itemStack) == 0 ) {//ツール以外
+                hasOnlyOneTool = false;
                 break;//使用不可
-            }else if(hasOnlyPickaxe){//ツルハシ二個目
-                hasOnlyPickaxe = false;
+            }else if(hasOnlyOneTool){//ツール二個目
+                hasOnlyOneTool = false;
                 break;
             }else{//最初のツルハシ
-                hasOnlyPickaxe = true;
+                hasOnlyOneTool = true;
             }
         }
-        if(!hasOnlyPickaxe){
-            sender.sendMessage(ChatColor.RED + "ディスペンサーの中にはツルハシを一つだけ入れてください。");
+        if(!hasOnlyOneTool){
+            sender.sendMessage(ChatColor.RED + "ディスペンサーの中にはツールを一つだけ入れてください。");
             return false;
         }
         //登録
@@ -138,8 +148,9 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             return;
         }
         Dispenser dispenser = (Dispenser) b.getState();
-        if(/*true||*/ event.getBlock().getType() == Material.DISPENSER &&
-           isPickaxe(event.getItem()) &&
+        ItemStack tool = event.getItem();
+        if(event.getBlock().getType() == Material.DISPENSER &&
+           getToolType(tool) != 0 &&
            bbLocations.contains(event.getBlock().getLocation())){
             //方角判断
             BlockFace facing;
@@ -158,24 +169,30 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             }else {//down
                 facing = BlockFace.DOWN;
             }
-            b.getRelative(facing).breakNaturally();
+            b.getRelative(facing).breakNaturally(tool);
             event.setCancelled(true);
             return;
         }
         return;
     }
     //ピッケル判定
-    public boolean isPickaxe(ItemStack item){
+    public int getToolType(ItemStack item){
         Material material = item.getType();
-        if(material == Material.WOODEN_PICKAXE ||
-           material == Material.STONE_PICKAXE ||
-           material == Material.IRON_PICKAXE ||
-           material == Material.DIAMOND_PICKAXE ||
-           material == Material.NETHERITE_PICKAXE ||
-           material == Material.GOLDEN_PICKAXE) {
-            return true;
-        }else{
-            return false;
+        for(Material p : PickAxes){
+            if (material == p){
+                return 1;//ピッケル
+            }
         }
+        for(Material p : Axes){
+            if (material == p){
+                return 2;//Oh No
+            }
+        }
+        for(Material p : Shovels){
+            if (material == p){
+                return 3;//喋る
+            }
+        }
+        return 0;//ツール以外
     }
 }
