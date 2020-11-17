@@ -16,6 +16,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.inventory.Inventory;
@@ -43,6 +44,20 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
         data = this.getConfig();
         ArrayList<Location> locs  = new ArrayList<>();
         bbLocations = (ArrayList<Location>)data.getList("Locations");
+        //無効なBB削除
+        int deletedBBs = 0;
+        ArrayList<Integer> indexesToRemove = new ArrayList<Integer>();
+        for(int i=0;i<bbLocations.size();i++){
+            Location loc = bbLocations.get(i);
+            if(loc.getBlock().getType() != Material.DISPENSER){
+                indexesToRemove.add(i);
+                deletedBBs++;
+            }
+        }
+        for(int index : indexesToRemove){
+            bbLocations.remove(index);
+        }
+        getServer().getConsoleSender().sendMessage("削除されたBB:"+deletedBBs+"個");
     }
 
     @Override
@@ -68,8 +83,9 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             return  false;
         }
         if(bbLocations.contains(b.getLocation())){
-            sender.sendMessage("既に登録済みです。");
-            return false;
+            bbLocations.remove(b.getLocation());
+            sender.sendMessage("ブロックブレイカーが削除されました。");
+            return true;
         }
         //ディスペンサー確定
         Dispenser dispenser = (Dispenser)b.getState();
@@ -97,6 +113,21 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
         bbLocations.add(b.getLocation());
         sender.sendMessage(ChatColor.AQUA + "ブロックブレイカーが作成されました。");
         return true;
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event){
+        Block b = event.getBlock();
+        if(b.getType() != Material.DISPENSER){
+            return;
+        }else if(!bbLocations.contains(b.getLocation())){
+            return;
+        }
+        //登録済みBB
+        //登録解除
+        bbLocations.remove(b.getLocation());
+        event.getPlayer().sendMessage(ChatColor.DARK_GREEN + "ブロックブレイカーが削除されました。");
+        return;
     }
 
     @EventHandler
