@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -180,7 +181,21 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
                targetMaterial == Material.BARRIER){//破壊不可
                 return;
             }
-            b.getRelative(facing).breakNaturally(tool);
+            Block targetBlock = b.getRelative(facing);
+            if(targetBlock.getType() == Material.SNOW &&
+               getToolType(tool) == 3/*シャベル*/){
+                ItemStack itemToDrop;
+                if(tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) > 0){
+                    itemToDrop = new ItemStack(Material.SNOW);
+                }else{
+                    itemToDrop = new ItemStack(Material.SNOWBALL);
+                }
+                targetBlock.breakNaturally();
+                targetBlock.getWorld().dropItem(targetBlock.getLocation(),itemToDrop);
+            }
+            else {
+                targetBlock.breakNaturally(tool);
+            }
             return;
         }
         return;
