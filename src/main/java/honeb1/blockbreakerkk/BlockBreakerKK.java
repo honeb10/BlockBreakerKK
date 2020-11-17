@@ -155,7 +155,7 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             //方角判断
             BlockFace facing;
             String data = b.getBlockData().getAsString();
-            //あんまりよくない実装かも…
+            //あんまりよくない実装だけどgetFacingできないから仕方ない（怒）
             if(data.contains("facing=north")){
                 facing = BlockFace.NORTH;
             }else if(data.contains("facing=south")){
@@ -169,8 +169,18 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             }else {//down
                 facing = BlockFace.DOWN;
             }
-            b.getRelative(facing).breakNaturally(tool);
+            Material targetMaterial = b.getRelative(facing).getType();
             event.setCancelled(true);
+            if(targetMaterial == Material.BEDROCK ||
+               targetMaterial == Material.END_PORTAL_FRAME ||
+               targetMaterial == Material.COMMAND_BLOCK ||
+               targetMaterial == Material.END_PORTAL ||
+               targetMaterial == Material.WATER ||
+               targetMaterial == Material.LAVA ||
+               targetMaterial == Material.BARRIER){//破壊不可
+                return;
+            }
+            b.getRelative(facing).breakNaturally(tool);
             return;
         }
         return;
