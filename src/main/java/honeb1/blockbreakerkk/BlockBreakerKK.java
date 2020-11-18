@@ -44,7 +44,16 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
              Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE};
     final Material[] Shovels = //type 3
             {Material.WOODEN_SHOVEL, Material.STONE_SHOVEL, Material.IRON_SHOVEL,
-             Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL};
+                    Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL};
+    final Material[] Swords = //type 4
+            {Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
+                    Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD};
+    final Material[] Hoes = //type 5
+            {Material.WOODEN_HOE, Material.STONE_HOE, Material.IRON_HOE,
+                    Material.GOLDEN_HOE, Material.DIAMOND_HOE, Material.NETHERITE_HOE};
+    final Material[] Shears = {Material.SHEARS};//type 6
+
+
 
     @Override
     public void onEnable() {
@@ -186,6 +195,11 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
     }
     //ピッケル判定
     public int getToolType(Material material){
+        for(Material p : Shovels){
+            if (material == p){
+                return 3;//喋る
+            }
+        }
         for(Material p : PickAxes){
             if (material == p){
                 return 1;//ピッケル
@@ -196,9 +210,19 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
                 return 2;//Oh No
             }
         }
-        for(Material p : Shovels){
+        for(Material p : Swords){
             if (material == p){
-                return 3;//喋る
+                return 4;//剣
+            }
+        }
+        for(Material p : Hoes){
+            if (material == p){
+                return 5;//ほえぇ...
+            }
+        }
+        for(Material p : Shears){
+            if (material == p){
+                return 6;//✌
             }
         }
         return 0;//ツール以外
