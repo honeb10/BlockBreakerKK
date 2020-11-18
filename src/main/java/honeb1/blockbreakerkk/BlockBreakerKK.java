@@ -29,14 +29,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class BlockBreakerKK extends JavaPlugin implements Listener {
     Configuration data;
     ArrayList<Location> bbLocations = new ArrayList<>();
+    Map<Location, BlockFace> facingMap = new HashMap<>();
+
     final Material[] PickAxes = //type  1
             {Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
              Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE};
@@ -63,7 +62,9 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             if(loc.getBlock().getType() != Material.DISPENSER){
                 indexesToRemove.add(i);
                 deletedBBs++;
+                continue;
             }
+            updateBBFace(loc);
         }
         for(int index : indexesToRemove){
             bbLocations.remove(index);
@@ -106,13 +107,13 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             ItemStack itemStack = dInv.getItem(i);
             if(itemStack == null){
                 continue;
-            }else if( getToolType(itemStack) == 0 ) {//ツール以外
+            }else if( getToolType(itemStack.getType()) == 0 ) {//ツール以外
                 hasOnlyOneTool = false;
                 break;//使用不可
             }else if(hasOnlyOneTool){//ツール二個目
                 hasOnlyOneTool = false;
                 break;
-            }else{//最初のツルハシ
+            }else{//最初のツール
                 hasOnlyOneTool = true;
             }
         }
@@ -122,6 +123,7 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
         }
         //登録
         bbLocations.add(b.getLocation());
+        updateBBFace(b.getLocation());
         sender.sendMessage(ChatColor.AQUA + "ブロックブレイカーが作成されました。");
         return true;
     }
@@ -148,28 +150,9 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
         if( b.getType() != Material.DISPENSER ){
             return;
         }
-        Dispenser dispenser = (Dispenser) b.getState();
-        ItemStack tool = event.getItem();
-        if(event.getBlock().getType() == Material.DISPENSER &&
-           getToolType(tool) != 0 &&
-           bbLocations.contains(event.getBlock().getLocation())){
+        if(bbLocations.contains(event.getBlock().getLocation())){
             //方角判断
-            BlockFace facing;
-            String data = b.getBlockData().getAsString();
-            //あんまりよくない実装だけどgetFacingできないから仕方ない（怒）
-            if(data.contains("facing=north")){
-                facing = BlockFace.NORTH;
-            }else if(data.contains("facing=south")){
-                facing = BlockFace.SOUTH;
-            }else if(data.contains("facing=east")){
-                facing = BlockFace.EAST;
-            }else if(data.contains("facing=west")){
-                facing = BlockFace.WEST;
-            }else if(data.contains("facing=up")){
-                facing = BlockFace.UP;
-            }else {//down
-                facing = BlockFace.DOWN;
-            }
+            BlockFace facing = facingMap.get(b.getLocation());
             Material targetMaterial = b.getRelative(facing).getType();
             event.setCancelled(true);
             if(targetMaterial == Material.BEDROCK ||
@@ -181,9 +164,10 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
                targetMaterial == Material.BARRIER){//破壊不可
                 return;
             }
+            ItemStack tool = event.getItem();
             Block targetBlock = b.getRelative(facing);
             if(targetBlock.getType() == Material.SNOW &&
-               getToolType(tool) == 3/*シャベル*/){
+               getToolType(tool.getType()) == 3/*シャベル*/){
                 ItemStack itemToDrop;
                 if(tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) > 0){
                     itemToDrop = new ItemStack(Material.SNOW);
@@ -201,8 +185,7 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
         return;
     }
     //ピッケル判定
-    public int getToolType(ItemStack item){
-        Material material = item.getType();
+    public int getToolType(Material material){
         for(Material p : PickAxes){
             if (material == p){
                 return 1;//ピッケル
@@ -219,5 +202,25 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
             }
         }
         return 0;//ツール以外
+    }
+
+    public void updateBBFace(Location loc){
+        BlockFace facing;
+        String data = loc.getBlock().getBlockData().getAsString();
+        //あんまりよくない実装だけどgetFacingできないから仕方ない（怒）
+        if(data.contains("facing=north")){
+            facing = BlockFace.NORTH;
+        }else if(data.contains("facing=south")){
+            facing = BlockFace.SOUTH;
+        }else if(data.contains("facing=east")){
+            facing = BlockFace.EAST;
+        }else if(data.contains("facing=west")){
+            facing = BlockFace.WEST;
+        }else if(data.contains("facing=up")){
+            facing = BlockFace.UP;
+        }else {//down
+            facing = BlockFace.DOWN;
+        }
+        facingMap.put(loc,facing);
     }
 }
