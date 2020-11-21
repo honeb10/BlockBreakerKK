@@ -32,9 +32,9 @@ import java.io.IOException;
 import java.util.*;
 
 public final class BlockBreakerKK extends JavaPlugin implements Listener {
-    Configuration data;
     ArrayList<Location> bbLocations = new ArrayList<>();
     Map<Location, BlockFace> facingMap = new HashMap<>();
+    FileConfiguration config;
 
     final Material[] PickAxes = //type  1
             {Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
@@ -60,32 +60,36 @@ public final class BlockBreakerKK extends JavaPlugin implements Listener {
         // Plugin startup logic
         getServer().getPluginManager().registerEvents(this, this);
         //既存のBB読み込み
-        data = this.getConfig();
+        saveDefaultConfig();
         ArrayList<Location> locs  = new ArrayList<>();
-        bbLocations = (ArrayList<Location>)data.getList("Locations");
-        //無効なBB削除
-        int deletedBBs = 0;
-        ArrayList<Integer> indexesToRemove = new ArrayList<Integer>();
-        for(int i=0;i<bbLocations.size();i++){
-            Location loc = bbLocations.get(i);
-            if(loc.getBlock().getType() != Material.DISPENSER){
-                indexesToRemove.add(i);
-                deletedBBs++;
-                continue;
+        config = getConfig();
+        bbLocations = (ArrayList<Location>)config.getList("Locations");
+        if(bbLocations == null){
+            bbLocations = new ArrayList<>();
+        } else{
+            //無効なBB削除
+            int deletedBBs = 0;
+            ArrayList<Integer> indexesToRemove = new ArrayList<Integer>();
+            for(int i=0;i<bbLocations.size();i++){
+                Location loc = bbLocations.get(i);
+                if(loc.getBlock().getType() != Material.DISPENSER){
+                    indexesToRemove.add(i);
+                    deletedBBs++;
+                    continue;
+                }
+                updateBBFace(loc);
             }
-            updateBBFace(loc);
+            for(int index : indexesToRemove){
+                bbLocations.remove(index);
+            }
         }
-        for(int index : indexesToRemove){
-            bbLocations.remove(index);
-        }
-        getServer().getConsoleSender().sendMessage("削除されたBB:"+deletedBBs+"個");
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
         //保存
-        data.set("Locations",bbLocations);
+        config.set("Locations",bbLocations);
         saveConfig();
     }
     @Override
